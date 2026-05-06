@@ -67,6 +67,8 @@ Run:
 node tools/audit-hiring.js --town Doylestown --limit 50 --update
 ```
 
+Use `--only-unaudited` for repeat passes so previously checked records are skipped.
+
 The audit checks company websites for likely careers links and hiring language. It records evidence URLs and confidence scores, but it should not be treated as definitive. Some websites use third-party applicant tracking systems, block crawlers, or mention jobs without current openings. Use this as a prioritization queue for human review.
 
 ## Nearby source targets

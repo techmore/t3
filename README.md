@@ -96,4 +96,10 @@ Run a website audit batch to look for careers pages, job links, and hiring langu
 node tools/audit-hiring.js --town Doylestown --limit 50 --update
 ```
 
+To avoid re-checking records that already have a signal:
+
+```bash
+node tools/audit-hiring.js --town Doylestown --only-unaudited --limit 50 --update
+```
+
 The script writes `reports/hiring-audit.json`. With `--update`, it also adds fields such as `hiring_signal`, `hiring_confidence`, `hiring_evidence_url`, and `hiring_last_checked` to matching company records. Treat these as evidence signals, not final truth; records still need manual review before being advertised as verified.

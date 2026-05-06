@@ -45,12 +45,14 @@ function parseArgs() {
     offset: 0,
     update: false,
     onlyWithWebsite: true,
+    onlyUnaudited: false,
     town: null
   };
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === "--update") options.update = true;
+    else if (arg === "--only-unaudited") options.onlyUnaudited = true;
     else if (arg === "--include-no-website") options.onlyWithWebsite = false;
     else if (arg === "--limit") options.limit = Number(args[++index]);
     else if (arg === "--offset") options.offset = Number(args[++index]);
@@ -251,6 +253,7 @@ async function main() {
   const companies = JSON.parse(fs.readFileSync(INPUT, "utf8"));
   const eligible = companies.filter((company) => {
     if (options.onlyWithWebsite && !normalizeUrl(company.website)) return false;
+    if (options.onlyUnaudited && company.hiring_signal) return false;
     if (options.town && townFor(company).toLowerCase() !== options.town.toLowerCase()) return false;
     return true;
   });
