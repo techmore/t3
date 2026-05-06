@@ -126,3 +126,17 @@ node tools/discover-websites.js --town Doylestown --limit 50
 ```
 
 This writes `reports/website-candidates.csv`. Review the candidates before applying them.
+
+To prepare a reviewable update file from discovered candidates:
+
+```bash
+node tools/prepare-website-updates.js
+```
+
+The generated `reports/website-updates.csv` includes an `approved` column. Set `approved=yes` for rows you trust before running `tools/apply-website-updates.js`.
+
+You can tighten candidate selection with:
+
+```bash
+node tools/prepare-website-updates.js --min-score 16
+```

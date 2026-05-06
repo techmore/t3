@@ -67,6 +67,7 @@ const rows = parseCsv(fs.readFileSync(inputPath, "utf8"));
 const [headers, ...records] = rows;
 const slugIndex = headers.indexOf("slug");
 const websiteIndex = headers.indexOf("website");
+const approvedIndex = headers.indexOf("approved");
 if (slugIndex === -1 || websiteIndex === -1) {
   console.error("CSV must include slug and website columns");
   process.exit(1);
@@ -78,6 +79,10 @@ let updated = 0;
 let skipped = 0;
 
 for (const record of records) {
+  if (approvedIndex !== -1 && !/^(1|true|yes|y)$/i.test(record[approvedIndex] || "")) {
+    skipped += 1;
+    continue;
+  }
   const slug = record[slugIndex];
   const website = normalizeUrl(record[websiteIndex]);
   const company = bySlug.get(slug);
