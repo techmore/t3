@@ -23,6 +23,7 @@ const BLOCKED_DOMAINS = [
   "cataloxy.us",
   "hairsalonsinusa.com",
   "salondiscover.com",
+  "beautynailhairsalons.com",
   "tripadvisor.com",
   "theknot.com",
   "weddingwire.com",

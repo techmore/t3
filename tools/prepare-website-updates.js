@@ -17,6 +17,7 @@ const BLOCKED_DOMAINS = [
   "allbiz.com",
   "bizapedia.com",
   "chamberofcommerce.com",
+  "beautynailhairsalons.com",
   "mapquest.com",
   "opencorporates.com",
   "zoominfo.com",
@@ -31,13 +32,15 @@ function parseArgs() {
   const options = {
     inputPath: "reports/website-candidates.csv",
     outputPath: "reports/website-updates.csv",
-    minScore: Number(process.env.MIN_WEBSITE_SCORE || 14)
+    minScore: Number(process.env.MIN_WEBSITE_SCORE || 14),
+    minVerificationScore: Number(process.env.MIN_VERIFICATION_SCORE || 0)
   };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === "--input") options.inputPath = args[++index];
     else if (arg === "--output") options.outputPath = args[++index];
     else if (arg === "--min-score") options.minScore = Number(args[++index]);
+    else if (arg === "--min-verification-score") options.minVerificationScore = Number(args[++index]);
   }
   return options;
 }
@@ -117,25 +120,31 @@ const bestBySlug = new Map();
 for (const record of records) {
   const slug = record[columns.slug];
   const score = Number(record[columns.score] || 0);
+  const verificationScore = columns.verification_score === undefined ? 0 : Number(record[columns.verification_score] || 0);
   const url = record[columns.candidate_url];
   if (!slug || !url || score < options.minScore) continue;
+  if (columns.verification_score !== undefined && verificationScore < options.minVerificationScore) continue;
   if (blocked(url)) continue;
+  const rank = verificationScore || score;
   const current = bestBySlug.get(slug);
-  if (!current || score > Number(current.score || 0)) {
+  if (!current || rank > Number(current.rank || 0)) {
     bestBySlug.set(slug, {
       slug,
       website: url,
       name: record[columns.name],
       town: record[columns.town],
       score,
+      verification_score: verificationScore || "",
+      recommendation: columns.recommendation === undefined ? "" : record[columns.recommendation],
       candidate_title: record[columns.candidate_title],
       reasons: record[columns.reasons],
+      rank,
       approved: ""
     });
   }
 }
 
-const outputHeaders = ["approved", "slug", "website", "name", "town", "score", "candidate_title", "reasons"];
+const outputHeaders = ["approved", "slug", "website", "name", "town", "score", "verification_score", "recommendation", "candidate_title", "reasons"];
 const outputRows = [
   outputHeaders.join(","),
   ...[...bestBySlug.values()].map((row) => outputHeaders.map((header) => csvEscape(row[header])).join(","))
@@ -145,4 +154,5 @@ fs.mkdirSync(path.dirname(options.outputPath), { recursive: true });
 fs.writeFileSync(options.outputPath, `${outputRows.join("\n")}\n`);
 console.log(`Prepared ${bestBySlug.size} candidate updates in ${options.outputPath}`);
 console.log(`Minimum score: ${options.minScore}`);
+if (options.minVerificationScore) console.log(`Minimum verification score: ${options.minVerificationScore}`);
 console.log("Set approved=yes on rows you want to apply, then run tools/apply-website-updates.js");

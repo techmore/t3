@@ -135,6 +135,20 @@ node tools/discover-websites.js --towns Doylestown,Quakertown --limit 100 --outp
 
 Use `--append` to add another run to an existing candidate file.
 
+To fetch candidate sites and add a verification score:
+
+```bash
+node tools/verify-website-candidates.js --input reports/priority-website-candidates.csv --output reports/priority-verified-websites.csv --min-score 12
+```
+
+This still does not update `companies.json`; it produces a stronger review queue.
+
+To prepare update rows from verified candidates:
+
+```bash
+node tools/prepare-website-updates.js --input reports/priority-verified-websites.csv --output reports/priority-website-updates.csv --min-score 12 --min-verification-score 24
+```
+
 To prepare a reviewable update file from discovered candidates:
 
 ```bash
