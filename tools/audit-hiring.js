@@ -3,7 +3,7 @@ const path = require("path");
 
 const INPUT = "companies.json";
 const REPORT_DIR = "reports";
-const REPORT_PATH = path.join(REPORT_DIR, "hiring-audit.json");
+const DEFAULT_REPORT_PATH = path.join(REPORT_DIR, "hiring-audit.json");
 const DEFAULT_LIMIT = 80;
 const REQUEST_TIMEOUT_MS = 9000;
 const USER_AGENT = "TinicumTalentThrive/1.0 hiring-signal-audit";
@@ -46,7 +46,8 @@ function parseArgs() {
     update: false,
     onlyWithWebsite: true,
     onlyUnaudited: false,
-    town: null
+    towns: [],
+    outputPath: DEFAULT_REPORT_PATH
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -54,12 +55,47 @@ function parseArgs() {
     if (arg === "--update") options.update = true;
     else if (arg === "--only-unaudited") options.onlyUnaudited = true;
     else if (arg === "--include-no-website") options.onlyWithWebsite = false;
-    else if (arg === "--limit") options.limit = Number(args[++index]);
-    else if (arg === "--offset") options.offset = Number(args[++index]);
-    else if (arg === "--town") options.town = args[++index];
+    else if (arg === "--limit") {
+      options.limit = parseNumber(readValue(args, index, arg), arg);
+      index += 1;
+    } else if (arg === "--offset") {
+      options.offset = parseNumber(readValue(args, index, arg), arg);
+      index += 1;
+    } else if (arg === "--town") {
+      options.towns.push(readValue(args, index, arg));
+      index += 1;
+    } else if (arg === "--towns") {
+      options.towns.push(...readValue(args, index, arg).split(",").map((town) => town.trim()).filter(Boolean));
+      index += 1;
+    } else if (arg === "--output") {
+      options.outputPath = readValue(args, index, arg);
+      index += 1;
+    } else {
+      console.error(`Unknown option: ${arg}`);
+      process.exit(1);
+    }
   }
 
+  options.towns = [...new Set(options.towns.map((town) => town.toLowerCase()))];
   return options;
+}
+
+function readValue(args, index, optionName) {
+  const value = args[index + 1];
+  if (!value || value.startsWith("--")) {
+    console.error(`Missing value for ${optionName}`);
+    process.exit(1);
+  }
+  return value;
+}
+
+function parseNumber(value, optionName) {
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 0) {
+    console.error(`${optionName} must be a non-negative integer`);
+    process.exit(1);
+  }
+  return number;
 }
 
 function normalizeUrl(value) {
@@ -254,7 +290,7 @@ async function main() {
   const eligible = companies.filter((company) => {
     if (options.onlyWithWebsite && !normalizeUrl(company.website)) return false;
     if (options.onlyUnaudited && company.hiring_signal) return false;
-    if (options.town && townFor(company).toLowerCase() !== options.town.toLowerCase()) return false;
+    if (options.towns.length && !options.towns.includes(townFor(company).toLowerCase())) return false;
     return true;
   });
   const batch = eligible.slice(options.offset, options.offset + options.limit);
@@ -266,7 +302,7 @@ async function main() {
     results.push(await auditCompany(company));
   }
 
-  fs.mkdirSync(REPORT_DIR, { recursive: true });
+  fs.mkdirSync(path.dirname(options.outputPath), { recursive: true });
   const report = {
     generated_at: new Date().toISOString(),
     options,
@@ -274,7 +310,7 @@ async function main() {
     audited_count: results.length,
     results
   };
-  fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
+  fs.writeFileSync(options.outputPath, `${JSON.stringify(report, null, 2)}\n`);
 
   if (options.update) {
     applyAudit(companies, results);
@@ -285,7 +321,7 @@ async function main() {
     counts[result.hiring_signal] = (counts[result.hiring_signal] || 0) + 1;
     return counts;
   }, {});
-  console.log(`Wrote ${REPORT_PATH}`);
+  console.log(`Wrote ${options.outputPath}`);
   console.log(summary);
 }
 

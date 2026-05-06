@@ -20,6 +20,7 @@ A production-ready static GitHub Pages site for Tinicum Talent Thrive. T3 is a h
 - Data quality dashboard at `data-quality.html`
 - GitHub Pages-ready root folder structure
 - One-command website discovery workflow for reviewable local business website updates
+- One-command hiring audit workflow for website-backed employer signal checks
 
 ## Run locally
 
@@ -119,6 +120,24 @@ node tools/apply-website-updates.js
 ```
 
 After applying new websites, rerun `tools/audit-hiring.js --only-unaudited --update` to audit the new website-backed records.
+
+For the normal hiring validation pass, run the workflow wrapper:
+
+```bash
+node tools/run-hiring-audit-workflow.js --towns Doylestown,Quakertown --limit 80
+```
+
+By default this audits only records without a prior hiring signal, updates `companies.json`, and refreshes the CSV review queues in `reports/`. To test the crawl without changing site data:
+
+```bash
+node tools/run-hiring-audit-workflow.js --town Doylestown --include-reviewed --limit 10 --no-update --output-prefix reports/doylestown-hiring-check
+```
+
+For a direct one-off audit with a custom report path:
+
+```bash
+node tools/audit-hiring.js --towns Doylestown,Quakertown --include-no-website --limit 50 --output reports/hiring-audit-priority.json
+```
 
 To generate candidate website matches for review:
 
