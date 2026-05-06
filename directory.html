@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Directory | T3</title>
+  <meta name="description" content="Search, filter, and sort local companies near Tinicum Township, Bucks County.">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="index.html"><span class="brand-mark">T3</span><span>Tinicum Talent Thrive</span></a>
+      <div class="nav-links">
+        <a href="index.html">Map</a>
+        <a href="directory.html" aria-current="page">Directory</a>
+        <a href="about.html">About</a>
+        <a class="button" href="https://forms.gle/placeholder">Add Your Company</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <p class="eyebrow">Employer Directory</p>
+      <h1>Find companies by fit, size, category, and hiring status.</h1>
+      <p class="lead"><span data-result-count>0</span> companies shown inside the 25-mile Tinicum radius.</p>
+    </section>
+
+    <section class="section">
+      <form class="toolbar" role="search">
+        <label>
+          <span class="eyebrow">Search</span>
+          <input data-filter="search" type="search" placeholder="Company, category, keyword, or town">
+        </label>
+        <label>
+          <span class="eyebrow">Category</span>
+          <select data-filter="category"></select>
+        </label>
+        <label>
+          <span class="eyebrow">Sort</span>
+          <select data-sort>
+            <option value="alpha">Alphabetical A-Z</option>
+            <option value="employees">Most employees</option>
+            <option value="oldest">Years in existence: oldest</option>
+            <option value="newest">Years in existence: newest</option>
+            <option value="score">Best Places score</option>
+          </select>
+        </label>
+        <div></div>
+        <div class="checks">
+          <label class="check"><input data-filter="hiring" type="checkbox"> Hiring now</label>
+          <label class="check"><input data-filter="onboarding" type="checkbox"> Known for strong onboarding</label>
+        </div>
+      </form>
+      <div class="card-grid" data-directory-results></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Tinicum Talent Thrive © 2026</span>
+      <a href="https://github.com/techmore/t3">GitHub</a>
+    </div>
+  </footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>

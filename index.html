@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>T3 - Tinicum Talent Transformation</title>
+  <meta name="description" content="Tinicum Talent Transformation is a local company directory and opportunity map for Tinicum Township and the surrounding 25-mile Bucks County radius.">
+  <meta property="og:title" content="T3 - Tinicum Talent Transformation">
+  <meta property="og:description" content="Discover local employers around Tinicum Township, Bucks County.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="index.html"><span class="brand-mark">T3</span><span>Tinicum Talent Thrive</span></a>
+      <div class="nav-links">
+        <a href="index.html" aria-current="page">Map</a>
+        <a href="directory.html">Directory</a>
+        <a href="about.html">About</a>
+        <a class="button" href="https://forms.gle/placeholder">Add Your Company</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Tinicum Talent Transformation</p>
+        <h1>Talent. Thrive. Transform. Right in Your Backyard.</h1>
+        <p class="lead">A hyper-local company directory and opportunity map for Tinicum Township and the surrounding 25-mile radius in Bucks County, PA.</p>
+        <div class="actions">
+          <a class="button" href="directory.html">Browse Directory</a>
+          <a class="button secondary" href="https://forms.gle/placeholder">Add Your Company</a>
+        </div>
+        <div class="stats" aria-label="Directory statistics">
+          <div class="stat"><strong data-stat="companies">0</strong><span>companies</span></div>
+          <div class="stat"><strong data-stat="hiring">0</strong><span>hiring now</span></div>
+          <div class="stat"><strong data-stat="employees">0</strong><span>local employees</span></div>
+        </div>
+      </div>
+      <div class="map-shell" aria-label="Interactive employer map">
+        <div id="map"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Featured Employers</p>
+          <h2>Companies inside the 25-mile radius</h2>
+        </div>
+        <p>Each marker and card is driven by the same `companies.json` file, making Phase 1 easy to update manually and ready for future automation.</p>
+      </div>
+      <div class="card-grid" data-featured-companies></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Tinicum Talent Thrive © 2026</span>
+      <a href="https://github.com/techmore/t3">GitHub</a>
+    </div>
+  </footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
