@@ -19,6 +19,7 @@ A production-ready static GitHub Pages site for Tinicum Talent Thrive. T3 is a h
 - Hiring review page at `hiring-audit.html`
 - Data quality dashboard at `data-quality.html`
 - GitHub Pages-ready root folder structure
+- One-command website discovery workflow for reviewable local business website updates
 
 ## Run locally
 
@@ -161,4 +162,28 @@ You can tighten candidate selection with:
 
 ```bash
 node tools/prepare-website-updates.js --min-score 16
+```
+
+For the normal town-by-town workflow, run discovery, verification, and update-file preparation together:
+
+```bash
+node tools/run-website-discovery-workflow.js --towns Doylestown,Quakertown --limit 100 --output-prefix reports/priority-websites
+```
+
+This creates:
+
+- `reports/priority-websites-candidates.csv`
+- `reports/priority-websites-verified.csv`
+- `reports/priority-websites-updates.csv`
+
+Review the updates file, set `approved=yes` only for official websites you trust, then run:
+
+```bash
+node tools/apply-website-updates.js --input reports/priority-websites-updates.csv
+```
+
+After applying approved websites, rerun the hiring audit for the newly website-backed records:
+
+```bash
+node tools/audit-hiring.js --only-unaudited --update
 ```

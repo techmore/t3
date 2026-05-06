@@ -1,6 +1,33 @@
 const fs = require("fs");
 
-const inputPath = process.argv[2] || "reports/website-updates.csv";
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const options = {
+    inputPath: "reports/website-updates.csv"
+  };
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--input") {
+      const value = args[index + 1];
+      if (!value || value.startsWith("--")) {
+        console.error("Missing value for --input");
+        process.exit(1);
+      }
+      options.inputPath = value;
+      index += 1;
+    } else if (!arg.startsWith("--") && index === 0) {
+      options.inputPath = arg;
+    } else {
+      console.error(`Unknown option: ${arg}`);
+      process.exit(1);
+    }
+  }
+
+  return options;
+}
+
+const { inputPath } = parseArgs();
 
 function parseCsv(text) {
   const rows = [];
