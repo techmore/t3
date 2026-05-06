@@ -1,6 +1,31 @@
 const fs = require("fs");
 const path = require("path");
 
+const BLOCKED_DOMAINS = [
+  "businessyab.com",
+  "berksconnect.com",
+  "yellowpages.com",
+  "superpages.com",
+  "yelp.com",
+  "tripadvisor.com",
+  "nextdoor.com",
+  "facebook.com",
+  "instagram.com",
+  "manta.com",
+  "bbb.org",
+  "hotfrog.com",
+  "allbiz.com",
+  "bizapedia.com",
+  "chamberofcommerce.com",
+  "mapquest.com",
+  "opencorporates.com",
+  "zoominfo.com",
+  "dandb.com",
+  "furnitureloc.com",
+  "antiquestoresnearby.com",
+  "onmaps.online"
+];
+
 function parseArgs() {
   const args = process.argv.slice(2);
   const options = {
@@ -61,6 +86,15 @@ function csvEscape(value) {
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
+function blocked(url) {
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    return BLOCKED_DOMAINS.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+  } catch {
+    return true;
+  }
+}
+
 const options = parseArgs();
 
 if (!fs.existsSync(options.inputPath)) {
@@ -85,6 +119,7 @@ for (const record of records) {
   const score = Number(record[columns.score] || 0);
   const url = record[columns.candidate_url];
   if (!slug || !url || score < options.minScore) continue;
+  if (blocked(url)) continue;
   const current = bestBySlug.get(slug);
   if (!current || score > Number(current.score || 0)) {
     bestBySlug.set(slug, {

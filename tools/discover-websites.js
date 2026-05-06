@@ -31,6 +31,8 @@ const BLOCKED_DOMAINS = [
   "visitbuckscounty.com",
   "centralbuckschamber.com",
   "sudentistalatino.org",
+  "businessyab.com",
+  "berksconnect.com",
   "hoursofoperations.com",
   "winnie.com",
   "doylestownobserver.com",
@@ -55,6 +57,10 @@ const BLOCKED_DOMAINS = [
   "mallsinamerica.com",
   "opencorporates.com",
   "dnb.com",
+  "dandb.com",
+  "furnitureloc.com",
+  "antiquestoresnearby.com",
+  "onmaps.online",
   "buzzfile.com",
   "chamberofcommerce.com",
   "loc8nearme.com",
@@ -77,14 +83,20 @@ function parseArgs() {
   const options = {
     limit: DEFAULT_LIMIT,
     offset: 0,
-    town: null
+    towns: [],
+    outputPath: path.join(REPORT_DIR, "website-candidates.csv"),
+    append: false
   };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === "--limit") options.limit = Number(args[++index]);
     else if (arg === "--offset") options.offset = Number(args[++index]);
-    else if (arg === "--town") options.town = args[++index];
+    else if (arg === "--town") options.towns.push(args[++index]);
+    else if (arg === "--towns") options.towns.push(...args[++index].split(",").map((town) => town.trim()).filter(Boolean));
+    else if (arg === "--output") options.outputPath = args[++index];
+    else if (arg === "--append") options.append = true;
   }
+  options.towns = options.towns.map((town) => town.toLowerCase());
   return options;
 }
 
@@ -229,9 +241,8 @@ function csvEscape(value) {
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
-function writeCsv(rows) {
-  fs.mkdirSync(REPORT_DIR, { recursive: true });
-  const filePath = path.join(REPORT_DIR, "website-candidates.csv");
+function writeCsv(rows, options) {
+  fs.mkdirSync(path.dirname(options.outputPath), { recursive: true });
   const headers = [
     "slug",
     "name",
@@ -245,12 +256,15 @@ function writeCsv(rows) {
     "reasons",
     "source_url"
   ];
+  const includeHeader = !options.append || !fs.existsSync(options.outputPath) || fs.statSync(options.outputPath).size === 0;
   const lines = [
-    headers.join(","),
+    ...(includeHeader ? [headers.join(",")] : []),
     ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(","))
   ];
-  fs.writeFileSync(filePath, `${lines.join("\n")}\n`);
-  return filePath;
+  const payload = `${lines.join("\n")}\n`;
+  if (options.append) fs.appendFileSync(options.outputPath, payload);
+  else fs.writeFileSync(options.outputPath, payload);
+  return options.outputPath;
 }
 
 async function main() {
@@ -259,7 +273,7 @@ async function main() {
   const queue = companies
     .filter((company) => !hasUsableWebsite(company))
     .filter((company) => hasBusinessLikeName(company))
-    .filter((company) => !options.town || townFor(company).toLowerCase() === options.town.toLowerCase())
+    .filter((company) => !options.towns.length || options.towns.includes(townFor(company).toLowerCase()))
     .slice(options.offset, options.offset + options.limit);
 
   const rows = [];
@@ -301,7 +315,7 @@ async function main() {
     await sleep(REQUEST_DELAY_MS);
   }
 
-  const filePath = writeCsv(rows);
+  const filePath = writeCsv(rows, options);
   const strong = rows.filter((row) => Number(row.score) >= 9).length;
   console.log(`Wrote ${rows.length} candidate rows to ${filePath}`);
   console.log(`${strong} candidates scored 9 or higher`);

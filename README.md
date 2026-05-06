@@ -127,6 +127,14 @@ node tools/discover-websites.js --town Doylestown --limit 50
 
 This writes `reports/website-candidates.csv`. Review the candidates before applying them.
 
+Discovery can also target several towns and write to a dedicated file:
+
+```bash
+node tools/discover-websites.js --towns Doylestown,Quakertown --limit 100 --output reports/priority-website-candidates.csv
+```
+
+Use `--append` to add another run to an existing candidate file.
+
 To prepare a reviewable update file from discovered candidates:
 
 ```bash
