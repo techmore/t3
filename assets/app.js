@@ -111,6 +111,7 @@ function companyCard(company) {
   const score = company.best_places_score ? `${company.best_places_score}/10` : "Not scored";
   const onboarding = company.onboarding_note ? "Strong onboarding" : "Onboarding not listed";
   const status = company.data_status ? ` • ${company.data_status.replaceAll("-", " ")}` : "";
+  const hiringSignal = company.hiring_signal ? ` • hiring audit: ${company.hiring_signal.replaceAll("_", " ")}` : "";
   return `
     <article class="company-card" data-slug="${company.slug}">
       <div class="card-top">
@@ -122,7 +123,7 @@ function companyCard(company) {
       </div>
       <span class="badge ${company.hiring ? "" : "muted"}">${company.hiring ? "Now Hiring" : "Not currently hiring"}</span>
       <p>${company.description}</p>
-      <p class="meta">${numberOrUnknown(company.total_employees, " employees")} • ${numberOrUnknown(company.years_in_business, " years in business")} • Best Places: ${score} • ${onboarding}${status}</p>
+      <p class="meta">${numberOrUnknown(company.total_employees, " employees")} • ${numberOrUnknown(company.years_in_business, " years in business")} • Best Places: ${score} • ${onboarding}${status}${hiringSignal}</p>
       <div class="card-actions">
         <a class="button secondary" href="${detailHref(company)}">Company Detail</a>
         <a class="button ghost" href="${pathToRoot()}index.html?company=${company.slug}">View on Map</a>
@@ -212,6 +213,49 @@ function initDirectory(companies) {
   render();
 }
 
+function initHiringAudit(companies) {
+  const results = document.querySelector("[data-audit-results]");
+  if (!results) return;
+
+  const townSelect = document.querySelector("[data-audit-filter='town']");
+  const towns = [...new Set(companies.map(townFor))].filter(Boolean).sort();
+  townSelect.innerHTML = `<option value="">All towns</option>${towns.map((town) => `<option value="${town}">${town}</option>`).join("")}`;
+
+  const stats = document.querySelector("[data-audit-stats]");
+  const counts = companies.reduce((acc, company) => {
+    const signal = company.hiring_signal || "not_audited";
+    acc[signal] = (acc[signal] || 0) + 1;
+    return acc;
+  }, {});
+  stats.innerHTML = ["hiring_likely", "hiring_possible", "careers_page_found", "unknown", "not_audited"]
+    .map((signal) => `<div class="stat"><strong>${money.format(counts[signal] || 0)}</strong><span>${signal.replaceAll("_", " ")}</span></div>`)
+    .join("");
+
+  const controls = document.querySelectorAll("[data-audit-filter], [data-audit-sort]");
+  const render = () => {
+    const query = document.querySelector("[data-audit-filter='search']").value.trim().toLowerCase();
+    const signal = document.querySelector("[data-audit-filter='signal']").value;
+    const town = townSelect.value;
+    const sort = document.querySelector("[data-audit-sort]").value;
+    let filtered = companies.filter((company) => {
+      const companySignal = company.hiring_signal || "not_audited";
+      const haystack = `${company.name} ${company.category} ${company.address} ${townFor(company)}`.toLowerCase();
+      return (!query || haystack.includes(query)) && (!signal || companySignal === signal) && (!town || townFor(company) === town);
+    });
+
+    filtered = filtered.sort((a, b) => {
+      if (sort === "name") return a.name.localeCompare(b.name);
+      if (sort === "recent") return String(b.hiring_last_checked || "").localeCompare(String(a.hiring_last_checked || ""));
+      return (b.hiring_confidence || 0) - (a.hiring_confidence || 0);
+    });
+
+    results.innerHTML = filtered.slice(0, DIRECTORY_RENDER_LIMIT).map(companyCard).join("") || `<p class="panel">No audit records match those filters.</p>`;
+  };
+
+  controls.forEach((control) => control.addEventListener("input", render));
+  render();
+}
+
 function initDetail(companies) {
   const detail = document.querySelector("[data-company-detail]");
   if (!detail) return;
@@ -243,10 +287,13 @@ function initDetail(companies) {
         <div class="fact"><strong>${company.onboarding_note || "Not listed"}</strong><span>Onboarding</span></div>
         <div class="fact"><strong>${company.data_status || "seeded"}</strong><span>Data status</span></div>
         <div class="fact"><strong>${company.source_name || "Manual entry"}</strong><span>Source</span></div>
+        <div class="fact"><strong>${company.hiring_signal ? company.hiring_signal.replaceAll("_", " ") : "Not audited"}</strong><span>Hiring audit</span></div>
+        <div class="fact"><strong>${company.hiring_last_checked || "Not checked"}</strong><span>Hiring checked</span></div>
       </div>
       <div class="actions" style="margin-top:20px;">
         <a class="button" href="${websiteHref(company)}">Visit Website</a>
         <a class="button secondary" href="../index.html?company=${company.slug}">View on Map</a>
+        ${company.hiring_evidence_url ? `<a class="button ghost" href="${company.hiring_evidence_url}">Hiring Evidence</a>` : ""}
         ${company.source_url ? `<a class="button ghost" href="${company.source_url}">Source</a>` : ""}
       </div>
     </section>
@@ -259,6 +306,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const companies = await getCompanies();
     initHome(companies);
     initDirectory(companies);
+    initHiringAudit(companies);
     initDetail(companies);
   } catch (error) {
     console.error(error);

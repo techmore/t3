@@ -15,6 +15,8 @@ A production-ready static GitHub Pages site for Tinicum Talent Thrive. T3 is a h
 - Data builder in `tools/build-companies.js`
 - OpenStreetMap candidate importer in `tools/import-osm-businesses.js`
 - Anchor employer seed script in `tools/add-anchor-employers.js`
+- Hiring signal audit script in `tools/audit-hiring.js`
+- Hiring review page at `hiring-audit.html`
 - GitHub Pages-ready root folder structure
 
 ## Run locally
@@ -85,3 +87,13 @@ Then add larger regional anchor employers:
 ```bash
 node tools/add-anchor-employers.js
 ```
+
+## Audit hiring signals
+
+Run a website audit batch to look for careers pages, job links, and hiring language:
+
+```bash
+node tools/audit-hiring.js --town Doylestown --limit 50 --update
+```
+
+The script writes `reports/hiring-audit.json`. With `--update`, it also adds fields such as `hiring_signal`, `hiring_confidence`, `hiring_evidence_url`, and `hiring_last_checked` to matching company records. Treat these as evidence signals, not final truth; records still need manual review before being advertised as verified.

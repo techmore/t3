@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hiring Audit | T3</title>
+  <meta name="description" content="Review hiring signal audit results for T3 company listings.">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="index.html"><span class="brand-mark">T3</span><span>Tinicum Talent Thrive</span></a>
+      <div class="nav-links">
+        <a href="index.html">Map</a>
+        <a href="directory.html">Directory</a>
+        <a href="hiring-audit.html" aria-current="page">Hiring Audit</a>
+        <a href="about.html">About</a>
+        <a class="button" href="https://forms.gle/placeholder">Add Your Company</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <p class="eyebrow">Hiring Signal Review</p>
+      <h1>Prioritize companies with evidence of careers pages or current hiring language.</h1>
+      <p class="lead">These are automated signals from public websites. Treat them as review leads, not verified job postings.</p>
+    </section>
+
+    <section class="section">
+      <form class="toolbar" role="search">
+        <label>
+          <span class="eyebrow">Search</span>
+          <input data-audit-filter="search" type="search" placeholder="Company, town, or category">
+        </label>
+        <label>
+          <span class="eyebrow">Signal</span>
+          <select data-audit-filter="signal">
+            <option value="">All signals</option>
+            <option value="hiring_likely">Hiring likely</option>
+            <option value="hiring_possible">Hiring possible</option>
+            <option value="careers_page_found">Careers page found</option>
+            <option value="not_hiring_signal">Not hiring signal</option>
+            <option value="unknown">Unknown</option>
+            <option value="not_audited">Not audited</option>
+          </select>
+        </label>
+        <label>
+          <span class="eyebrow">Town</span>
+          <select data-audit-filter="town"></select>
+        </label>
+        <label>
+          <span class="eyebrow">Sort</span>
+          <select data-audit-sort>
+            <option value="confidence">Highest confidence</option>
+            <option value="name">Company A-Z</option>
+            <option value="recent">Recently checked</option>
+          </select>
+        </label>
+      </form>
+      <div class="stats" data-audit-stats></div>
+      <div class="card-grid" style="margin-top:18px;" data-audit-results></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Tinicum Talent Thrive © 2026</span>
+      <a href="https://github.com/techmore/t3">GitHub</a>
+    </div>
+  </footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>

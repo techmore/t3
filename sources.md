@@ -59,6 +59,16 @@ node tools/add-anchor-employers.js
 
 The first anchor pass focuses on Doylestown and nearby major employers from official pages and the PA CWIA Bucks County Top 50 Employers list.
 
+## Hiring signal audit
+
+Run:
+
+```bash
+node tools/audit-hiring.js --town Doylestown --limit 50 --update
+```
+
+The audit checks company websites for likely careers links and hiring language. It records evidence URLs and confidence scores, but it should not be treated as definitive. Some websites use third-party applicant tracking systems, block crawlers, or mention jobs without current openings. Use this as a prioritization queue for human review.
+
 ## Nearby source targets
 
 - Peddler's Village businesses
