@@ -68,6 +68,14 @@ Use a URL-safe `slug`. Detail pages are available through `company/index.html?sl
 
 Companies outside the 25-mile radius are automatically hidden by the map and directory scripts.
 
+The directory supports shareable review links through query parameters such as:
+
+```text
+directory.html?town=Doylestown&website=without
+directory.html?town=Quakertown&signal=positive
+directory.html?town=Easton&signal=audited
+```
+
 ## Rebuild the seeded directory
 
 The current expanded directory is generated from `tools/build-companies.js`, including a seeded Peddler's Village directory from the official March 2025 map PDF.

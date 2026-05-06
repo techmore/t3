@@ -386,6 +386,18 @@ select {
   color: var(--muted);
 }
 
+.facts a.fact {
+  color: inherit;
+  display: block;
+  text-decoration: none;
+}
+
+.facts a.fact:hover strong {
+  color: var(--green-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .table-wrap {
   overflow-x: auto;
   background: var(--surface);
@@ -424,6 +436,13 @@ select {
 
 .coverage-table .number-cell {
   text-align: right;
+}
+
+.coverage-table a {
+  color: var(--green-dark);
+  font-weight: 850;
+  text-decoration-color: rgba(47, 111, 67, 0.35);
+  text-underline-offset: 3px;
 }
 
 .about-grid {

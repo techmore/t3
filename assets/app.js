@@ -78,6 +78,15 @@ function websiteAction(company, className = "button ghost") {
   return `<a class="${className}" href="${websiteDiscoveryHref(company)}">Find Website</a>`;
 }
 
+function directoryHref(filters = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") params.set(key, value);
+  });
+  const query = params.toString();
+  return `${pathToRoot()}directory.html${query ? `?${query}` : ""}`;
+}
+
 function townFor(company) {
   const parts = (company.address || "").split(",").map((part) => part.trim()).filter(Boolean);
   if (parts.length >= 4 && /^(PA|NJ)$/i.test(parts[parts.length - 2])) return parts[parts.length - 3];
@@ -184,6 +193,12 @@ function initDirectory(companies) {
   if (!results) return;
 
   const categorySelect = document.querySelector("[data-filter='category']");
+  const searchInput = document.querySelector("[data-filter='search']");
+  const hiringInput = document.querySelector("[data-filter='hiring']");
+  const onboardingInput = document.querySelector("[data-filter='onboarding']");
+  const websiteSelect = document.querySelector("[data-filter='website']");
+  const signalSelect = document.querySelector("[data-filter='signal']");
+  const sortSelect = document.querySelector("[data-sort]");
   const categories = [...new Set(companies.map((company) => company.category))].sort();
   categorySelect.innerHTML = `<option value="">All categories</option>${categories.map((category) => `<option value="${category}">${category}</option>`).join("")}`;
   const townSelect = document.querySelector("[data-filter='town']");
@@ -192,16 +207,26 @@ function initDirectory(companies) {
     townSelect.innerHTML = `<option value="">All towns</option>${towns.map((town) => `<option value="${town}">${town}</option>`).join("")}`;
   }
 
+  const params = new URLSearchParams(window.location.search);
+  searchInput.value = params.get("search") || "";
+  setSelectValue(categorySelect, params.get("category"));
+  if (townSelect) setSelectValue(townSelect, params.get("town"));
+  setSelectValue(signalSelect, params.get("signal"));
+  setSelectValue(websiteSelect, params.get("website"));
+  setSelectValue(sortSelect, params.get("sort"));
+  hiringInput.checked = truthyParam(params.get("hiring"));
+  onboardingInput.checked = truthyParam(params.get("onboarding"));
+
   const controls = document.querySelectorAll("[data-filter], [data-sort]");
-  const render = () => {
-    const query = document.querySelector("[data-filter='search']").value.trim().toLowerCase();
+  const render = (options = {}) => {
+    const query = searchInput.value.trim().toLowerCase();
     const category = categorySelect.value;
     const town = townSelect ? townSelect.value : "";
-    const hiringOnly = document.querySelector("[data-filter='hiring']").checked;
-    const onboardingOnly = document.querySelector("[data-filter='onboarding']").checked;
-    const websiteMode = document.querySelector("[data-filter='website']")?.value || "";
-    const signal = document.querySelector("[data-filter='signal']")?.value || "";
-    const sort = document.querySelector("[data-sort]").value;
+    const hiringOnly = hiringInput.checked;
+    const onboardingOnly = onboardingInput.checked;
+    const websiteMode = websiteSelect?.value || "";
+    const signal = signalSelect?.value || "";
+    const sort = sortSelect.value;
 
     let filtered = companies.filter((company) => {
       const haystack = `${company.name} ${company.category} ${company.description} ${company.address}`.toLowerCase();
@@ -210,7 +235,7 @@ function initDirectory(companies) {
         (!query || haystack.includes(query)) &&
         (!category || company.category === category) &&
         (!town || townFor(company) === town) &&
-        (!signal || companySignal === signal) &&
+        signalMatches(companySignal, signal) &&
         (!websiteMode || (websiteMode === "with" ? hasUsableWebsite(company) : !hasUsableWebsite(company))) &&
         (!hiringOnly || company.hiring) &&
         (!onboardingOnly || company.onboarding_note)
@@ -230,10 +255,44 @@ function initDirectory(companies) {
     const shown = document.querySelector("[data-result-shown]");
     if (shown) shown.textContent = filtered.length > visible.length ? `Showing ${money.format(visible.length)}. Use search or filters to narrow the full set.` : "";
     results.innerHTML = visible.length ? visible.map(companyCard).join("") : `<p class="panel">No companies match those filters.</p>`;
+    if (options.updateUrl !== false) {
+      updateDirectoryUrl({ search: searchInput.value.trim(), category, town, signal, website: websiteMode, sort, hiring: hiringOnly, onboarding: onboardingOnly });
+    }
   };
 
   controls.forEach((control) => control.addEventListener("input", render));
-  render();
+  render({ updateUrl: false });
+}
+
+function truthyParam(value) {
+  return /^(1|true|yes|y)$/i.test(value || "");
+}
+
+function setSelectValue(select, value) {
+  if (!select || value === null) return;
+  if ([...select.options].some((option) => option.value === value)) select.value = value;
+}
+
+function signalMatches(companySignal, filterSignal) {
+  if (!filterSignal) return true;
+  if (filterSignal === "positive") return ["hiring_likely", "hiring_possible", "careers_page_found"].includes(companySignal);
+  if (filterSignal === "audited") return companySignal !== "not_audited";
+  return companySignal === filterSignal;
+}
+
+function updateDirectoryUrl(state) {
+  const params = new URLSearchParams();
+  if (state.search) params.set("search", state.search);
+  if (state.category) params.set("category", state.category);
+  if (state.town) params.set("town", state.town);
+  if (state.signal) params.set("signal", state.signal);
+  if (state.website) params.set("website", state.website);
+  if (state.sort && state.sort !== "alpha") params.set("sort", state.sort);
+  if (state.hiring) params.set("hiring", "1");
+  if (state.onboarding) params.set("onboarding", "1");
+  const query = params.toString();
+  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`;
+  window.history.replaceState(null, "", nextUrl);
 }
 
 function topCounts(items, keyFn, limit = 10) {
@@ -305,15 +364,15 @@ function renderTownCoverage(companies) {
             .map(
               (row) => `
                 <tr>
-                  <td>${row.town}</td>
-                  <td class="number-cell">${money.format(row.total)}</td>
-                  <td class="number-cell">${money.format(row.websites)}</td>
+                  <td><a href="${directoryHref({ town: row.town })}">${row.town}</a></td>
+                  <td class="number-cell"><a href="${directoryHref({ town: row.town })}">${money.format(row.total)}</a></td>
+                  <td class="number-cell"><a href="${directoryHref({ town: row.town, website: "with" })}">${money.format(row.websites)}</a></td>
                   <td class="number-cell">${pct(row.websites, row.total)}</td>
-                  <td class="number-cell">${money.format(row.audited)}</td>
+                  <td class="number-cell"><a href="${directoryHref({ town: row.town, signal: "audited" })}">${money.format(row.audited)}</a></td>
                   <td class="number-cell">${pct(row.audited, row.websites)}</td>
-                  <td class="number-cell">${money.format(row.positive)}</td>
-                  <td class="number-cell">${money.format(row.unknown)}</td>
-                  <td class="number-cell">${money.format(row.needsWebsite)}</td>
+                  <td class="number-cell"><a href="${directoryHref({ town: row.town, signal: "positive" })}">${money.format(row.positive)}</a></td>
+                  <td class="number-cell"><a href="${directoryHref({ town: row.town, signal: "unknown" })}">${money.format(row.unknown)}</a></td>
+                  <td class="number-cell"><a href="${directoryHref({ town: row.town, website: "without" })}">${money.format(row.needsWebsite)}</a></td>
                 </tr>
               `
             )
@@ -366,7 +425,7 @@ function initDataQuality(companies) {
   }
   if (townSummary) {
     townSummary.innerHTML = topCounts(needsWebsite, townFor, 18)
-      .map(([town, count]) => `<div class="fact"><strong>${money.format(count)}</strong><span>${town}</span></div>`)
+      .map(([town, count]) => `<a class="fact" href="${directoryHref({ town, website: "without" })}"><strong>${money.format(count)}</strong><span>${town}</span></a>`)
       .join("");
   }
 }
