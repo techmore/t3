@@ -1,6 +1,7 @@
 const TINICUM_CENTER = [40.4825, -75.1069];
 const RADIUS_MILES = 25;
 const RADIUS_METERS = RADIUS_MILES * 1609.344;
+const DIRECTORY_RENDER_LIMIT = 700;
 
 const money = new Intl.NumberFormat("en-US");
 
@@ -47,6 +48,19 @@ function markerIcon(company) {
   });
 }
 
+function detailHref(company) {
+  return `${pathToRoot()}company/index.html?slug=${encodeURIComponent(company.slug)}`;
+}
+
+function numberOrUnknown(value, suffix = "") {
+  if (value === null || value === undefined || value === "") return "Unknown";
+  return `${money.format(value)}${suffix}`;
+}
+
+function websiteHref(company) {
+  return company.website || company.source_url || "#";
+}
+
 function setupMap(elementId, companies, options = {}) {
   const map = L.map(elementId, { scrollWheelZoom: options.scrollWheelZoom ?? false }).setView(TINICUM_CENTER, options.zoom ?? 10);
 
@@ -63,16 +77,16 @@ function setupMap(elementId, companies, options = {}) {
     weight: 2
   }).addTo(map);
 
-  const markers = L.layerGroup().addTo(map);
+  const markers = window.L.markerClusterGroup ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 42 }).addTo(map) : L.layerGroup().addTo(map);
   companies.forEach((company) => {
     const hiring = company.hiring ? '<strong style="color:#2f6f43;">Now Hiring</strong>' : "<strong>Not currently hiring</strong>";
     L.marker([company.latitude, company.longitude], { icon: markerIcon(company), title: company.name })
       .bindPopup(`
         <strong>${company.name}</strong><br>
         ${hiring}<br>
-        ${money.format(company.total_employees)} employees<br>
+        ${numberOrUnknown(company.total_employees, " employees")}<br>
         ${company.description}<br>
-        <a href="${pathToRoot()}company/${company.slug}.html">Full company detail</a>
+        <a href="${detailHref(company)}">Full company detail</a>
       `)
       .addTo(markers);
   });
@@ -89,6 +103,7 @@ function setupMap(elementId, companies, options = {}) {
 function companyCard(company) {
   const score = company.best_places_score ? `${company.best_places_score}/10` : "Not scored";
   const onboarding = company.onboarding_note ? "Strong onboarding" : "Onboarding not listed";
+  const status = company.data_status ? ` • ${company.data_status.replaceAll("-", " ")}` : "";
   return `
     <article class="company-card" data-slug="${company.slug}">
       <div class="card-top">
@@ -100,10 +115,11 @@ function companyCard(company) {
       </div>
       <span class="badge ${company.hiring ? "" : "muted"}">${company.hiring ? "Now Hiring" : "Not currently hiring"}</span>
       <p>${company.description}</p>
-      <p class="meta">${money.format(company.total_employees)} employees • ${company.years_in_business} years in business • Best Places: ${score} • ${onboarding}</p>
+      <p class="meta">${numberOrUnknown(company.total_employees, " employees")} • ${numberOrUnknown(company.years_in_business, " years in business")} • Best Places: ${score} • ${onboarding}${status}</p>
       <div class="card-actions">
-        <a class="button secondary" href="${pathToRoot()}company/${company.slug}.html">Company Detail</a>
+        <a class="button secondary" href="${detailHref(company)}">Company Detail</a>
         <a class="button ghost" href="${pathToRoot()}index.html?company=${company.slug}">View on Map</a>
+        <a class="button ghost" href="${websiteHref(company)}">Website</a>
       </div>
     </article>
   `;
@@ -115,7 +131,7 @@ function updateStats(companies) {
   const statEmployees = document.querySelector("[data-stat='employees']");
   if (statCompanies) statCompanies.textContent = money.format(companies.length);
   if (statHiring) statHiring.textContent = money.format(companies.filter((company) => company.hiring).length);
-  if (statEmployees) statEmployees.textContent = money.format(companies.reduce((sum, company) => sum + company.total_employees, 0));
+  if (statEmployees) statEmployees.textContent = money.format(companies.reduce((sum, company) => sum + (company.total_employees || 0), 0));
 }
 
 function renderFeatured(companies) {
@@ -164,15 +180,18 @@ function initDirectory(companies) {
     });
 
     filtered = filtered.sort((a, b) => {
-      if (sort === "employees") return b.total_employees - a.total_employees;
-      if (sort === "oldest") return b.years_in_business - a.years_in_business;
-      if (sort === "newest") return a.years_in_business - b.years_in_business;
+      if (sort === "employees") return (b.total_employees ?? -1) - (a.total_employees ?? -1);
+      if (sort === "oldest") return (b.years_in_business ?? -1) - (a.years_in_business ?? -1);
+      if (sort === "newest") return (a.years_in_business ?? 9999) - (b.years_in_business ?? 9999);
       if (sort === "score") return (b.best_places_score ?? -1) - (a.best_places_score ?? -1);
       return a.name.localeCompare(b.name);
     });
 
+    const visible = filtered.slice(0, DIRECTORY_RENDER_LIMIT);
     document.querySelector("[data-result-count]").textContent = money.format(filtered.length);
-    results.innerHTML = filtered.length ? filtered.map(companyCard).join("") : `<p class="panel">No companies match those filters.</p>`;
+    const shown = document.querySelector("[data-result-shown]");
+    if (shown) shown.textContent = filtered.length > visible.length ? `Showing ${money.format(visible.length)}. Use search or filters to narrow the full set.` : "";
+    results.innerHTML = visible.length ? visible.map(companyCard).join("") : `<p class="panel">No companies match those filters.</p>`;
   };
 
   controls.forEach((control) => control.addEventListener("input", render));
@@ -182,7 +201,7 @@ function initDirectory(companies) {
 function initDetail(companies) {
   const detail = document.querySelector("[data-company-detail]");
   if (!detail) return;
-  const slug = document.body.dataset.companySlug;
+  const slug = document.body.dataset.companySlug || new URLSearchParams(window.location.search).get("slug");
   const company = companies.find((entry) => entry.slug === slug);
   if (!company) {
     detail.innerHTML = `<section class="panel"><h1>Company not found</h1><p class="lead">This company is not listed in the current T3 directory.</p></section>`;
@@ -204,14 +223,17 @@ function initDetail(companies) {
       </div>
       <p class="lead" style="margin-top:18px;">${company.description}</p>
       <div class="facts">
-        <div class="fact"><strong>${money.format(company.total_employees)}</strong><span>Employees</span></div>
-        <div class="fact"><strong>${company.years_in_business}</strong><span>Years in business</span></div>
+        <div class="fact"><strong>${numberOrUnknown(company.total_employees)}</strong><span>Employees</span></div>
+        <div class="fact"><strong>${numberOrUnknown(company.years_in_business)}</strong><span>Years in business</span></div>
         <div class="fact"><strong>${company.best_places_score ? `${company.best_places_score}/10` : "Not scored"}</strong><span>Best Places score</span></div>
         <div class="fact"><strong>${company.onboarding_note || "Not listed"}</strong><span>Onboarding</span></div>
+        <div class="fact"><strong>${company.data_status || "seeded"}</strong><span>Data status</span></div>
+        <div class="fact"><strong>${company.source_name || "Manual entry"}</strong><span>Source</span></div>
       </div>
       <div class="actions" style="margin-top:20px;">
-        <a class="button" href="${company.website}">Visit Website</a>
+        <a class="button" href="${websiteHref(company)}">Visit Website</a>
         <a class="button secondary" href="../index.html?company=${company.slug}">View on Map</a>
+        ${company.source_url ? `<a class="button ghost" href="${company.source_url}">Source</a>` : ""}
       </div>
     </section>
   `;

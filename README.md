@@ -6,10 +6,14 @@ A production-ready static GitHub Pages site for Tinicum Talent Thrive. T3 is a h
 
 - Static HTML, CSS, and vanilla JavaScript
 - Leaflet.js map with OpenStreetMap tiles
+- Marker clustering for large local datasets
 - 25-mile radius centered on `40.4825, -75.1069`
 - Company markers, popups, and individual detail pages
 - Filterable and sortable directory
 - Single `companies.json` data source
+- Offline source/audit notes in `sources.md`
+- Data builder in `tools/build-companies.js`
+- OpenStreetMap candidate importer in `tools/import-osm-businesses.js`
 - GitHub Pages-ready root folder structure
 
 ## Run locally
@@ -53,6 +57,24 @@ Edit `companies.json`. Each company object should include:
 }
 ```
 
-Use a URL-safe `slug` because each detail page lives at `company/[slug].html`. If you add a new company, duplicate any existing file in `company/`, rename it to the new slug, and update the `data-company-slug` value in the `<body>` tag.
+Use a URL-safe `slug`. Detail pages are available through `company/index.html?slug=your-company-slug`, so new companies do not require a new HTML file.
 
 Companies outside the 25-mile radius are automatically hidden by the map and directory scripts.
+
+## Rebuild the seeded directory
+
+The current expanded directory is generated from `tools/build-companies.js`, including a seeded Peddler's Village directory from the official March 2025 map PDF.
+
+```bash
+node tools/build-companies.js
+```
+
+After rebuilding, review `companies.json` before publishing. Entries with `data_status: "needs-website-audit"` need human or scripted verification for website, hiring status, employee count, and onboarding details.
+
+To significantly expand candidate listings from OpenStreetMap:
+
+```bash
+node tools/import-osm-businesses.js
+```
+
+Run the OSM import after the base build. It adds broad local candidates and preserves source URLs for audit. The importer intentionally requires usable names and addresses so the public directory remains navigable.
