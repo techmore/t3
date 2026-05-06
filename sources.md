@@ -7,6 +7,7 @@ This project is still a static GitHub Pages site. The scraping/audit layer is in
 - Peddler's Village shop directory PDF, March 2025: `https://peddlersvillage.com/wp-content/uploads/2025/03/PV-Map0325.pdf`
 - Peddler's Village official site: `https://peddlersvillage.com/`
 - OpenStreetMap Overpass candidate import: `https://overpass-api.de/api/interpreter`
+- Pennsylvania CWIA Bucks County Top 50 Employers PDF: `https://www.pa.gov/content/dam/copapwp-pagov/en/dli/documents/cwia/products/top-50-emp-ind/bucks_county_top_50.pdf`
 - Known individual Peddler's Village business sites where available from public search results:
   - Buttonwood Grill: `https://buttonwoodgrill.com/`
   - Hart's Tavern: `https://hartstavern.com/`
@@ -47,6 +48,16 @@ node tools/import-osm-businesses.js
 ```
 
 This importer pulls named `shop`, `amenity`, `office`, `craft`, `tourism`, and `leisure` records within 25 miles of Tinicum Township. It deduplicates against existing names, preserves OSM source URLs, and marks imported records as `needs-website-audit`.
+
+## Anchor employers
+
+Run this after the OSM import to add or update larger regional anchor employers:
+
+```bash
+node tools/add-anchor-employers.js
+```
+
+The first anchor pass focuses on Doylestown and nearby major employers from official pages and the PA CWIA Bucks County Top 50 Employers list.
 
 ## Nearby source targets
 

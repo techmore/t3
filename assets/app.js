@@ -61,6 +61,13 @@ function websiteHref(company) {
   return company.website || company.source_url || "#";
 }
 
+function townFor(company) {
+  const parts = (company.address || "").split(",").map((part) => part.trim()).filter(Boolean);
+  if (parts.length >= 4 && /^(PA|NJ)$/i.test(parts[parts.length - 2])) return parts[parts.length - 3];
+  if (parts.length >= 2) return parts[parts.length - 2].replace(/\bPA\b|\bNJ\b/g, "").trim();
+  return "Town needs audit";
+}
+
 function setupMap(elementId, companies, options = {}) {
   const map = L.map(elementId, { scrollWheelZoom: options.scrollWheelZoom ?? false }).setView(TINICUM_CENTER, options.zoom ?? 10);
 
@@ -160,11 +167,17 @@ function initDirectory(companies) {
   const categorySelect = document.querySelector("[data-filter='category']");
   const categories = [...new Set(companies.map((company) => company.category))].sort();
   categorySelect.innerHTML = `<option value="">All categories</option>${categories.map((category) => `<option value="${category}">${category}</option>`).join("")}`;
+  const townSelect = document.querySelector("[data-filter='town']");
+  if (townSelect) {
+    const towns = [...new Set(companies.map(townFor))].filter(Boolean).sort();
+    townSelect.innerHTML = `<option value="">All towns</option>${towns.map((town) => `<option value="${town}">${town}</option>`).join("")}`;
+  }
 
   const controls = document.querySelectorAll("[data-filter], [data-sort]");
   const render = () => {
     const query = document.querySelector("[data-filter='search']").value.trim().toLowerCase();
     const category = categorySelect.value;
+    const town = townSelect ? townSelect.value : "";
     const hiringOnly = document.querySelector("[data-filter='hiring']").checked;
     const onboardingOnly = document.querySelector("[data-filter='onboarding']").checked;
     const sort = document.querySelector("[data-sort]").value;
@@ -174,6 +187,7 @@ function initDirectory(companies) {
       return (
         (!query || haystack.includes(query)) &&
         (!category || company.category === category) &&
+        (!town || townFor(company) === town) &&
         (!hiringOnly || company.hiring) &&
         (!onboardingOnly || company.onboarding_note)
       );

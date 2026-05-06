@@ -14,6 +14,7 @@ A production-ready static GitHub Pages site for Tinicum Talent Thrive. T3 is a h
 - Offline source/audit notes in `sources.md`
 - Data builder in `tools/build-companies.js`
 - OpenStreetMap candidate importer in `tools/import-osm-businesses.js`
+- Anchor employer seed script in `tools/add-anchor-employers.js`
 - GitHub Pages-ready root folder structure
 
 ## Run locally
@@ -78,3 +79,9 @@ node tools/import-osm-businesses.js
 ```
 
 Run the OSM import after the base build. It adds broad local candidates and preserves source URLs for audit. The importer intentionally requires usable names and addresses so the public directory remains navigable.
+
+Then add larger regional anchor employers:
+
+```bash
+node tools/add-anchor-employers.js
+```
