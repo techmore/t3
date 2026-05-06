@@ -110,3 +110,11 @@ To export CSV review queues:
 ```bash
 node tools/export-review-queues.js
 ```
+
+To apply manually discovered websites, create `reports/website-updates.csv` with `slug,website`, then run:
+
+```bash
+node tools/apply-website-updates.js
+```
+
+After applying new websites, rerun `tools/audit-hiring.js --only-unaudited --update` to audit the new website-backed records.

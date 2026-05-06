@@ -14,6 +14,14 @@ function townFor(company) {
   return "Town needs audit";
 }
 
+function websiteDiscoveryQuery(company) {
+  return `${company.name} ${townFor(company)} ${company.category} official website`;
+}
+
+function websiteDiscoveryUrl(company) {
+  return `https://www.google.com/search?q=${encodeURIComponent(websiteDiscoveryQuery(company))}`;
+}
+
 function csvEscape(value) {
   const text = String(value ?? "");
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -21,11 +29,14 @@ function csvEscape(value) {
 
 function writeCsv(fileName, rows) {
   const headers = [
+    "slug",
     "name",
     "town",
     "category",
     "address",
     "website",
+    "website_search_query",
+    "website_search_url",
     "hiring_signal",
     "hiring_confidence",
     "hiring_evidence_url",
@@ -38,6 +49,8 @@ function writeCsv(fileName, rows) {
       headers
         .map((header) => {
           if (header === "town") return csvEscape(townFor(company));
+          if (header === "website_search_query") return csvEscape(websiteDiscoveryQuery(company));
+          if (header === "website_search_url") return csvEscape(websiteDiscoveryUrl(company));
           return csvEscape(company[header]);
         })
         .join(",")

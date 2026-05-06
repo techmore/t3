@@ -65,6 +65,19 @@ function hasUsableWebsite(company) {
   return Boolean(company.website && !company.website.includes("example.com"));
 }
 
+function websiteDiscoveryQuery(company) {
+  return `${company.name} ${townFor(company)} ${company.category} official website`;
+}
+
+function websiteDiscoveryHref(company) {
+  return `https://www.google.com/search?q=${encodeURIComponent(websiteDiscoveryQuery(company))}`;
+}
+
+function websiteAction(company, className = "button ghost") {
+  if (hasUsableWebsite(company)) return `<a class="${className}" href="${company.website}">Website</a>`;
+  return `<a class="${className}" href="${websiteDiscoveryHref(company)}">Find Website</a>`;
+}
+
 function townFor(company) {
   const parts = (company.address || "").split(",").map((part) => part.trim()).filter(Boolean);
   if (parts.length >= 4 && /^(PA|NJ)$/i.test(parts[parts.length - 2])) return parts[parts.length - 3];
@@ -131,7 +144,8 @@ function companyCard(company) {
       <div class="card-actions">
         <a class="button secondary" href="${detailHref(company)}">Company Detail</a>
         <a class="button ghost" href="${pathToRoot()}index.html?company=${company.slug}">View on Map</a>
-        <a class="button ghost" href="${websiteHref(company)}">Website</a>
+        ${websiteAction(company)}
+        ${!hasUsableWebsite(company) && company.source_url ? `<a class="button ghost" href="${company.source_url}">Source</a>` : ""}
       </div>
     </article>
   `;
@@ -355,7 +369,7 @@ function initDetail(companies) {
         <div class="fact"><strong>${company.hiring_last_checked || "Not checked"}</strong><span>Hiring checked</span></div>
       </div>
       <div class="actions" style="margin-top:20px;">
-        <a class="button" href="${websiteHref(company)}">Visit Website</a>
+        ${websiteAction(company, "button")}
         <a class="button secondary" href="../index.html?company=${company.slug}">View on Map</a>
         ${company.hiring_evidence_url ? `<a class="button ghost" href="${company.hiring_evidence_url}">Hiring Evidence</a>` : ""}
         ${company.source_url ? `<a class="button ghost" href="${company.source_url}">Source</a>` : ""}
