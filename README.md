@@ -21,6 +21,7 @@ A production-ready static GitHub Pages site for Tinicum Talent Thrive. T3 is a h
 - GitHub Pages-ready root folder structure
 - One-command website discovery workflow for reviewable local business website updates
 - One-command hiring audit workflow for website-backed employer signal checks
+- Dataset coverage exports for town-by-town enrichment planning
 
 ## Run locally
 
@@ -113,6 +114,14 @@ To export CSV review queues:
 node tools/export-review-queues.js
 ```
 
+To export town coverage and dataset totals for planning:
+
+```bash
+node tools/export-dataset-summary.js
+```
+
+This writes `reports/dataset-summary.json` and `reports/town-coverage.csv` with website coverage, hiring audit coverage, and recommended next action by town.
+
 To apply manually discovered websites, create `reports/website-updates.csv` with `slug,website`, then run:
 
 ```bash
@@ -127,7 +136,7 @@ For the normal hiring validation pass, run the workflow wrapper:
 node tools/run-hiring-audit-workflow.js --towns Doylestown,Quakertown --limit 80
 ```
 
-By default this audits only records without a prior hiring signal, updates `companies.json`, and refreshes the CSV review queues in `reports/`. To test the crawl without changing site data:
+By default this audits only records without a prior hiring signal, updates `companies.json`, and refreshes the CSV review queues plus dataset coverage exports in `reports/`. To test the crawl without changing site data:
 
 ```bash
 node tools/run-hiring-audit-workflow.js --town Doylestown --include-reviewed --limit 10 --no-update --output-prefix reports/doylestown-hiring-check

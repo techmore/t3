@@ -137,6 +137,7 @@ function main() {
 
   runStep("Audit hiring signals", auditArgs, repoRoot);
   runStep("Refresh review queues", ["tools/export-review-queues.js"], repoRoot);
+  runStep("Refresh dataset summary", ["tools/export-dataset-summary.js"], repoRoot);
 
   const summary = summarizeAudit(path.join(repoRoot, auditOutput));
   if (summary) {
@@ -147,6 +148,7 @@ function main() {
   }
   console.log(`Audit report: ${auditOutput}`);
   console.log("Review queues: reports/positive-hiring-signals.csv, reports/unknown-hiring-signals.csv, reports/needs-website.csv");
+  console.log("Coverage exports: reports/dataset-summary.json, reports/town-coverage.csv");
 }
 
 try {

@@ -245,6 +245,85 @@ function topCounts(items, keyFn, limit = 10) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit);
 }
 
+function townCoverageRows(companies) {
+  const rows = new Map();
+  companies.forEach((company) => {
+    const town = townFor(company);
+    if (!rows.has(town)) {
+      rows.set(town, {
+        town,
+        total: 0,
+        websites: 0,
+        audited: 0,
+        positive: 0,
+        unknown: 0,
+        needsWebsite: 0,
+        notAudited: 0
+      });
+    }
+    const row = rows.get(town);
+    const hasWebsite = hasUsableWebsite(company);
+    const signal = company.hiring_signal || "not_audited";
+    row.total += 1;
+    if (hasWebsite) row.websites += 1;
+    else row.needsWebsite += 1;
+    if (company.hiring_signal) row.audited += 1;
+    if (["hiring_likely", "hiring_possible", "careers_page_found"].includes(signal)) row.positive += 1;
+    if (signal === "unknown") row.unknown += 1;
+    if (signal === "not_audited") row.notAudited += 1;
+  });
+  return [...rows.values()].sort((a, b) => b.needsWebsite - a.needsWebsite || b.total - a.total || a.town.localeCompare(b.town));
+}
+
+function pct(value, total) {
+  if (!total) return "0%";
+  return `${Math.round((value / total) * 100)}%`;
+}
+
+function renderTownCoverage(companies) {
+  const target = document.querySelector("[data-quality-town-coverage]");
+  if (!target) return;
+  const rows = townCoverageRows(companies).slice(0, 30);
+  target.innerHTML = `
+    <div class="table-wrap">
+      <table class="coverage-table">
+        <thead>
+          <tr>
+            <th>Town</th>
+            <th class="number-cell">Companies</th>
+            <th class="number-cell">Websites</th>
+            <th class="number-cell">Website %</th>
+            <th class="number-cell">Audited</th>
+            <th class="number-cell">Audit %</th>
+            <th class="number-cell">Positive</th>
+            <th class="number-cell">Unknown</th>
+            <th class="number-cell">Needs site</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              (row) => `
+                <tr>
+                  <td>${row.town}</td>
+                  <td class="number-cell">${money.format(row.total)}</td>
+                  <td class="number-cell">${money.format(row.websites)}</td>
+                  <td class="number-cell">${pct(row.websites, row.total)}</td>
+                  <td class="number-cell">${money.format(row.audited)}</td>
+                  <td class="number-cell">${pct(row.audited, row.websites)}</td>
+                  <td class="number-cell">${money.format(row.positive)}</td>
+                  <td class="number-cell">${money.format(row.unknown)}</td>
+                  <td class="number-cell">${money.format(row.needsWebsite)}</td>
+                </tr>
+              `
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 function initDataQuality(companies) {
   const stats = document.querySelector("[data-quality-stats]");
   if (!stats) return;
@@ -265,6 +344,7 @@ function initDataQuality(companies) {
   ]
     .map(([label, value]) => `<div class="stat"><strong>${money.format(value)}</strong><span>${label}</span></div>`)
     .join("");
+  renderTownCoverage(companies);
 
   const websiteQueue = document.querySelector("[data-quality-website-queue]");
   const unknownQueue = document.querySelector("[data-quality-unknown-queue]");
