@@ -61,6 +61,10 @@ function websiteHref(company) {
   return company.website || company.source_url || "#";
 }
 
+function hasUsableWebsite(company) {
+  return Boolean(company.website && !company.website.includes("example.com"));
+}
+
 function townFor(company) {
   const parts = (company.address || "").split(",").map((part) => part.trim()).filter(Boolean);
   if (parts.length >= 4 && /^(PA|NJ)$/i.test(parts[parts.length - 2])) return parts[parts.length - 3];
@@ -181,14 +185,19 @@ function initDirectory(companies) {
     const town = townSelect ? townSelect.value : "";
     const hiringOnly = document.querySelector("[data-filter='hiring']").checked;
     const onboardingOnly = document.querySelector("[data-filter='onboarding']").checked;
+    const websiteMode = document.querySelector("[data-filter='website']")?.value || "";
+    const signal = document.querySelector("[data-filter='signal']")?.value || "";
     const sort = document.querySelector("[data-sort]").value;
 
     let filtered = companies.filter((company) => {
       const haystack = `${company.name} ${company.category} ${company.description} ${company.address}`.toLowerCase();
+      const companySignal = company.hiring_signal || "not_audited";
       return (
         (!query || haystack.includes(query)) &&
         (!category || company.category === category) &&
         (!town || townFor(company) === town) &&
+        (!signal || companySignal === signal) &&
+        (!websiteMode || (websiteMode === "with" ? hasUsableWebsite(company) : !hasUsableWebsite(company))) &&
         (!hiringOnly || company.hiring) &&
         (!onboardingOnly || company.onboarding_note)
       );
@@ -211,6 +220,61 @@ function initDirectory(companies) {
 
   controls.forEach((control) => control.addEventListener("input", render));
   render();
+}
+
+function topCounts(items, keyFn, limit = 10) {
+  const counts = items.reduce((acc, item) => {
+    const key = keyFn(item) || "Unknown";
+    acc.set(key, (acc.get(key) || 0) + 1);
+    return acc;
+  }, new Map());
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit);
+}
+
+function initDataQuality(companies) {
+  const stats = document.querySelector("[data-quality-stats]");
+  if (!stats) return;
+
+  const usableWebsites = companies.filter(hasUsableWebsite);
+  const audited = companies.filter((company) => company.hiring_signal);
+  const positive = companies.filter((company) => ["hiring_likely", "hiring_possible", "careers_page_found"].includes(company.hiring_signal));
+  const unknown = companies.filter((company) => company.hiring_signal === "unknown");
+  const needsWebsite = companies.filter((company) => !hasUsableWebsite(company));
+
+  stats.innerHTML = [
+    ["Companies", companies.length],
+    ["Usable websites", usableWebsites.length],
+    ["Hiring audited", audited.length],
+    ["Positive signals", positive.length],
+    ["Unknown signals", unknown.length],
+    ["Needs website", needsWebsite.length]
+  ]
+    .map(([label, value]) => `<div class="stat"><strong>${money.format(value)}</strong><span>${label}</span></div>`)
+    .join("");
+
+  const websiteQueue = document.querySelector("[data-quality-website-queue]");
+  const unknownQueue = document.querySelector("[data-quality-unknown-queue]");
+  const positiveQueue = document.querySelector("[data-quality-positive-queue]");
+  const townSummary = document.querySelector("[data-quality-town-summary]");
+
+  if (websiteQueue) {
+    websiteQueue.innerHTML = needsWebsite.slice(0, 24).map(companyCard).join("");
+  }
+  if (unknownQueue) {
+    unknownQueue.innerHTML = unknown.slice(0, 24).map(companyCard).join("");
+  }
+  if (positiveQueue) {
+    positiveQueue.innerHTML = positive
+      .sort((a, b) => (b.hiring_confidence || 0) - (a.hiring_confidence || 0))
+      .slice(0, 24)
+      .map(companyCard)
+      .join("");
+  }
+  if (townSummary) {
+    townSummary.innerHTML = topCounts(needsWebsite, townFor, 18)
+      .map(([town, count]) => `<div class="fact"><strong>${money.format(count)}</strong><span>${town}</span></div>`)
+      .join("");
+  }
 }
 
 function initHiringAudit(companies) {
@@ -307,6 +371,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initHome(companies);
     initDirectory(companies);
     initHiringAudit(companies);
+    initDataQuality(companies);
     initDetail(companies);
   } catch (error) {
     console.error(error);

@@ -235,7 +235,7 @@ p {
 
 .toolbar {
   display: grid;
-  grid-template-columns: 1.6fr repeat(3, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   background: var(--surface);
   border: 1px solid var(--line);

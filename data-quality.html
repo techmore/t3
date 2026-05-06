@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data Quality | T3</title>
+  <meta name="description" content="Review T3 company data quality, hiring audit coverage, and website discovery queues.">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="index.html"><span class="brand-mark">T3</span><span>Tinicum Talent Thrive</span></a>
+      <div class="nav-links">
+        <a href="index.html">Map</a>
+        <a href="directory.html">Directory</a>
+        <a href="hiring-audit.html">Hiring Audit</a>
+        <a href="data-quality.html" aria-current="page">Data Quality</a>
+        <a href="about.html">About</a>
+        <a class="button" href="https://forms.gle/placeholder">Add Your Company</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <p class="eyebrow">Data Quality</p>
+      <h1>Track what is usable now and what needs enrichment next.</h1>
+      <p class="lead">This page separates audited website records from companies that still need website discovery or manual review.</p>
+    </section>
+
+    <section class="section">
+      <div class="stats" data-quality-stats></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Next Queue</p>
+          <h2>Needs website discovery</h2>
+        </div>
+        <p>These companies are in the radius but do not have a usable website URL yet.</p>
+      </div>
+      <div class="facts panel" data-quality-town-summary></div>
+      <div class="card-grid" style="margin-top:18px;" data-quality-website-queue></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Review Queue</p>
+          <h2>Strongest positive hiring signals</h2>
+        </div>
+        <p>Automated evidence only. These should be manually reviewed before being treated as verified openings.</p>
+      </div>
+      <div class="card-grid" data-quality-positive-queue></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Review Queue</p>
+          <h2>Audited websites with unknown signal</h2>
+        </div>
+        <p>These sites were reachable but did not expose clear hiring language through the automated pass.</p>
+      </div>
+      <div class="card-grid" data-quality-unknown-queue></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>Tinicum Talent Thrive © 2026</span>
+      <a href="https://github.com/techmore/t3">GitHub</a>
+    </div>
+  </footer>
+  <script src="assets/app.js"></script>
+</body>
+</html>
